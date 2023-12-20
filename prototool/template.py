@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from glob import iglob
 from typing import TYPE_CHECKING, TypedDict, Callable
 
+from prototool.config import Config
 if TYPE_CHECKING:
 	from prototool import ProtoTool
-from prototool.config import Config
 
 
 def _copytree(src: str, dst: str, override: Callable[[str,str], bool]|None):
@@ -34,6 +34,7 @@ class TemplateFile:
 class TemplateConfig(TypedDict):
 	template: str
 	tools: list[str]
+	fleets: list[str | list[str, bool]]
 
 
 class Template(abc.ABC):
@@ -50,6 +51,17 @@ class Template(abc.ABC):
 	@abc.abstractmethod
 	def files(self) -> list[TemplateFile]: raise NotImplementedError()
 
+	@property
+	@abc.abstractmethod
+	def default_fleets(self) -> list[str|list[str, bool]]: raise NotImplementedError()
+
+	@staticmethod
+	def get_template_name_from_config(path: str) -> str|None:
+		if not path.endswith("prototool.json"):
+			path = os.path.join(path, "prototool.json")
+		with open(path, "r") as f:
+			return json.load(f).get("template", None)
+
 	path: str
 	config: TemplateConfig
 
@@ -64,13 +76,6 @@ class Template(abc.ABC):
 
 		self.template_path = os.path.join(Config.TEMPLATES_PATH, self.name)
 		self.data_path = os.path.join(self.template_path, "data")
-
-	@staticmethod
-	def get_template_name_from_config(path: str) -> str|None:
-		if not path.endswith("prototool.json"):
-			path = os.path.join(path, "prototool.json")
-		with open(path, "r") as f:
-			return json.load(f).get("template", None)
 
 	def upgrade(self):
 		# Ensure all required tools are in the config
@@ -116,19 +121,21 @@ class Template(abc.ABC):
 		if not os.path.isfile(self._config_path):
 			# noinspection PyTypeChecker
 			self.config = {}
-			self._set_default_config()
+			self._ensure_config()
 			self._write_config()
 			return
 		with open(self._config_path, "r") as f:
 			self.config = json.load(f)
+		self._ensure_config()
 
 	def _write_config(self):
 		with open(self._config_path, "w") as f:
 			json.dump(self.config, f, indent="\t")
 
-	def _set_default_config(self):
-		self.config["template"] = self.name
-		self.config["tools"] = self.tools
+	def _ensure_config(self):
+		self.config.setdefault("template", self.name)
+		self.config.setdefault("tools", self.tools)
+		self.config.setdefault("fleets", self.default_fleets)
 
 	# Overrideable method for template upgrade
 	def _upgrade_pre(self): pass

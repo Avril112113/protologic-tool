@@ -13,25 +13,30 @@ class Executable(abc.ABC):
 	Creating a new Tool object should not do anything, only it's methods should perform actions.
 	"""
 
-	group: Tool|None  # Set when added to a group.
+	tool: Tool | None  # Set when added to a group.
 
 	def __init__(self, name: str):
-		self.group = None
+		self.tool = None
 		self.name = name
-		self.exe_path: str | False = False
+		self._exe_path: str | None = None
 		self.url: str | None = None
 
 	def set_exe(self, exe: REDUCE_OS[str]):
-		self.exe_path = reduce_os_dict(exe)
+		self._exe_path = reduce_os_dict(exe)
 		return self
 
 	def find_exe(self, exe: REDUCE_OS[str]):
-		self.exe_path = reduce_os_dict(exe)
-		path = shutil.which(self.exe_path)
+		self._exe_path = reduce_os_dict(exe)
+		path = shutil.which(self._exe_path)
 		if path is not None:
 			# We lower the extension part, it doesn't matter, but it looks nicer.
-			self.exe_path = path[:path.rfind(".")] + path[path.rfind("."):].lower()
+			self._exe_path = path[:path.rfind(".")] + path[path.rfind("."):].lower()
 		return self
+
+	@property
+	def exe_path(self) -> str:
+		assert self._exe_path is not None
+		return os.path.join(self.tool.tool_path, self._exe_path)
 
 	def set_url(self, url: str):
 		self.url = url
@@ -39,15 +44,12 @@ class Executable(abc.ABC):
 
 	@property
 	def exists(self):
-		return os.path.isfile(self.exe_path)
+		return self._exe_path is not None and os.path.isfile(self.exe_path)
 
-	def exec(self, args: list[str]):
-		assert self.group is not None
-		if self.exe_path is None:
-			raise FileNotFoundError(f"Tool '{self.name}' has not been downloaded.")
-		elif self.exe_path is False:
-			raise FileNotFoundError(f"Tool '{self.name}' is not supposed to be executed.")
-		elif not os.path.isfile(self.exe_path):
+	def exec(self, args: list[str], **kwargs):
+		assert self.tool is not None, f"Executable '{self.name}' is not associated with a tool."
+		if not self.tool.is_downloaded():
+			raise FileNotFoundError(f"Tool '{self.tool.name}' is not downloaded.")
+		elif self._exe_path is None or not os.path.isfile(self.exe_path):
 			raise FileNotFoundError(f"Tool '{self.name}' is missing '{self.exe_path}'")
-
-		raise NotImplementedError()
+		return Popen([self.exe_path, *args], **kwargs)

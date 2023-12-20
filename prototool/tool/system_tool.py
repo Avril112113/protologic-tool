@@ -18,4 +18,4 @@ class SystemTool(Tool):
 			if not executable.exists:
 				print(f"Missing '{executable.name}' from '{executable.url if executable.url is not None else '<URL_MISSING>'}'")
 			else:
-				print(f"Found '{executable.name}' at '{executable.exe_path}'")
+				print(f"Found '{executable.name}' at '{executable._exe_path}'")

@@ -25,10 +25,10 @@ class Tool(abc.ABC):
 		self.tool_path = os.path.join(Config.TOOLS_PATH, name)
 		self._version_dict_path = os.path.join(self.tool_path, ".version_dict.json")
 
-	def add_executable(self, tool: "Executable"):
-		assert tool.group is None
-		self.executables[tool.name] = tool
-		tool.group = self
+	def add_executable(self, executable: "Executable"):
+		assert executable.tool is None
+		self.executables[executable.name] = executable
+		executable.tool = self
 		return self
 
 	def get_executable(self, name: str):
