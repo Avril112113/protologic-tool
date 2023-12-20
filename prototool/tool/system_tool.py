@@ -11,7 +11,7 @@ class SystemTool(Tool):
 	is_empemeral = True
 
 	def _check_update(self, version_dict: dict) -> bool:
-		return all(executable.exists for executable in self.executables.values())
+		return any(not executable.exists for executable in self.executables.values())
 
 	def _update(self, version_dict: dict, incremental: bool):
 		for executable in self.executables.values():

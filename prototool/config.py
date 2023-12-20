@@ -13,11 +13,14 @@ class Config:
 	BASE_PATH: str
 	# Path for external tools like protologic to be downloaded to.
 	TOOLS_PATH: str
+	# Path to the 'templates' folder.
+	TEMPLATES_PATH: str
 
 	@classmethod
 	def update_base_path(cls, path: str):
 		cls.BASE_PATH = os.path.abspath(path)
 		cls.TOOLS_PATH = os.path.join(cls.BASE_PATH, "tools")
+		cls.TEMPLATES_PATH = os.path.join(cls.BASE_PATH, "templates")
 
 
 if getattr(sys, "frozen", False):

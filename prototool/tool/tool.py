@@ -45,7 +45,10 @@ class Tool(abc.ABC):
 		raise NotImplementedError()
 
 	def check_update(self) -> bool:
-		version_dict = self._read_version_dict()
+		if self.is_empemeral:
+			version_dict = {}
+		else:
+			version_dict = self._read_version_dict()
 		if version_dict is None:
 			return True
 		return self._check_update(version_dict)
@@ -84,7 +87,7 @@ class Tool(abc.ABC):
 
 	def is_downloaded(self):
 		if self.is_empemeral:
-			return self._check_update({})
+			return not self._check_update({})
 		return os.path.exists(self.tool_path)
 
 	def ensure_available(self):
