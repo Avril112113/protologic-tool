@@ -1,7 +1,7 @@
-from prototool.template import Template
+from prototool.template import Template, TemplateFile
 
 
 class BlankTemplate(Template):
 	name = "blank"
 	tools = ["protologic"]
-	upgrade_files = []
+	files = []

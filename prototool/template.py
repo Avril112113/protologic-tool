@@ -2,6 +2,8 @@ import abc
 import json
 import os.path
 import shutil
+from dataclasses import dataclass
+from glob import iglob
 from typing import TYPE_CHECKING, TypedDict, Callable
 
 if TYPE_CHECKING:
@@ -21,6 +23,14 @@ def _copytree(src: str, dst: str, override: Callable[[str,str], bool]|None):
 			_copytree(path, out, override)
 
 
+@dataclass(init=True)
+class TemplateFile:
+	src: str  # Glob
+	dst: str
+	override: bool = False
+	ignore: str|None = None  # Pattern to ignore, if src is a directory.
+
+
 class TemplateConfig(TypedDict):
 	template: str
 	tools: list[str]
@@ -36,10 +46,9 @@ class Template(abc.ABC):
 	@abc.abstractmethod
 	def tools(self) -> list[str]: raise NotImplementedError()
 
-	# Files to override during an upgrade.
 	@property
 	@abc.abstractmethod
-	def upgrade_files(self) -> list[str]: raise NotImplementedError()
+	def files(self) -> list[TemplateFile]: raise NotImplementedError()
 
 	path: str
 	config: TemplateConfig
@@ -64,12 +73,6 @@ class Template(abc.ABC):
 			return json.load(f).get("template", None)
 
 	def upgrade(self):
-		def _override_filter(src, dst) -> bool:
-			if dst.replace("\\", "/") in self.upgrade_files:
-				print(f"Overriding '{dst}'")
-				return True
-			return False
-
 		# Ensure all required tools are in the config
 		for tool_name in self.tools:
 			if tool_name not in self.config["tools"]:
@@ -81,7 +84,31 @@ class Template(abc.ABC):
 				print(f"Downloading missing tool '{tool.name}'")
 				tool.update()
 		self._upgrade_pre()
-		_copytree(self.data_path, self.path, override=_override_filter)
+		for tfile in self.files:
+			def _override_handler(s: str, d: str):
+				if tfile.override:
+					print("Updating", d)
+					return True
+				return False
+
+			path_parts = tfile.src.split("/")
+			if path_parts[0] == "data":
+				src = os.path.join(self.data_path, os.path.normpath("/".join(path_parts[1:])))
+			elif path_parts[0] == "tools":
+				src = os.path.join(Config.TOOLS_PATH, os.path.normpath("/".join(path_parts[1:])))
+			else:
+				raise FileNotFoundError(f"Template invalid src '{path_parts[0]}'")
+			dst = os.path.join(self.path, os.path.normpath(tfile.dst))
+			for path in iglob(src, recursive=True):
+				if os.path.isfile(path):
+					if os.path.exists(tfile.dst):
+						if tfile.override:
+							print("Updating", dst)
+						else:
+							continue
+					shutil.copy(path, dst)
+				elif os.path.isdir(path):
+					_copytree(src, dst, override=_override_handler)
 		self._upgrade_post()
 		self._write_config()
 
