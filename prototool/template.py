@@ -6,9 +6,10 @@ from dataclasses import dataclass
 from glob import iglob
 from typing import TYPE_CHECKING, TypedDict, Callable
 
-from prototool.config import Config
+from .config import Config
 if TYPE_CHECKING:
-	from prototool import ProtoTool
+	from .prototool import ProtoTool
+	from .simulation import SimulationHook
 
 
 def _copytree(src: str, dst: str, override: Callable[[str,str], bool]|None):
@@ -54,6 +55,10 @@ class Template(abc.ABC):
 	@property
 	@abc.abstractmethod
 	def default_fleets(self) -> list[str|list[str, bool]]: raise NotImplementedError()
+
+	@property
+	@abc.abstractmethod
+	def hooks(self) -> list[type["SimulationHook"]]: raise NotImplementedError()
 
 	@staticmethod
 	def get_template_name_from_config(path: str) -> str|None:

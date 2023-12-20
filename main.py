@@ -2,6 +2,8 @@ import os.path
 import shutil
 import sys
 import argparse
+from typing import Iterable
+
 import dotenv
 
 from prototool.config import Config
@@ -10,7 +12,8 @@ dotenv.load_dotenv(os.path.join(Config.BASE_PATH, ".env"))  # From tool path.
 dotenv.load_dotenv()  # default behaviour
 
 from prototool import ProtoTool, Template
-from prototool.simulation import Simulation, SimulationFleet
+from prototool.simulation import Simulation, SimulationFleet, SimulationHook
+from prototool.protohook import ProtoHook
 
 
 PROTOTOOL_VERSION = "0.1.0"
@@ -79,6 +82,7 @@ cli_actions_upgrade = cli_action.add_parser("upgrade", help="Update a fleet from
 cli_actions_sim = cli_action.add_parser("sim", help="Simulate a battle.")
 cli_actions_sim.add_argument("--out", default="./sim", help="Directory to save simulation log and replay.")
 cli_actions_sim.add_argument("--play", action="store_true", help="Plays the replay in the player once simulated.")
+cli_actions_sim.add_argument("--no-hook", action="store_true", help="Does not use the ProtoHook (does not apply to template hooks).")
 cli_actions_sim.add_argument("path", nargs="*", help="Path to a fleet (directory containing or path to '.wasm').")
 cli_actions_sim.add_argument("--debug", "-d", action="append", help="Enable debug for the fleet.")
 
@@ -174,8 +178,10 @@ def _cli_actions_upgrade(proto: ProtoTool):
 	template.upgrade()
 
 
-def _cli_actions_sim(proto: ProtoTool, out: str, fleets: list[str], debug: list[str], stdout=True) -> bool:
+def _cli_actions_sim(proto: ProtoTool, out: str, fleets: list[str], debug: list[str], stdout=True, hooks: Iterable[type[SimulationHook]] = (ProtoHook,)) -> bool:
 	sim = Simulation(proto)
+	for hook in hooks:
+		sim.hooks.append(hook(sim))
 
 	def add_path(fleet_path: str, fleet_debug: bool) -> bool:
 		if os.path.isfile(fleet_path):
@@ -188,6 +194,9 @@ def _cli_actions_sim(proto: ProtoTool, out: str, fleets: list[str], debug: list[
 			if template is None:
 				print(f"Fleet '{fleet_path}' not found.", file=sys.stderr)
 				return False
+			for hook_type in template.hooks:
+				if not sim.has_hook(hook_type):
+					sim.hooks.append(hook_type(sim))
 			# FIXME: We could end up in infinite recursion.
 			for sub_fleet in template.config.get("fleets", []):
 				if isinstance(sub_fleet, list):
@@ -209,7 +218,7 @@ def _cli_actions_sim(proto: ProtoTool, out: str, fleets: list[str], debug: list[
 		print(f"Simulation not run, missing fleets to simulate.", file=sys.stderr)
 		return False
 
-	print("Starting simulation.")
+	print(f"Starting simulation. (hooks={', '.join(hook.__class__.__name__ for hook in sim.hooks) if len(sim.hooks) > 0 else 'None'})")
 	first = True
 	for sim_fleet in sim.fleets:
 		print(f"{'   ' if first else 'vs '}{sim_fleet.get_fleet_name()}{'  (debug enabled)' if sim_fleet.debug else ''}")
@@ -282,7 +291,8 @@ def main():
 	elif args.action == "sim":
 		if len(args.path) <= 0 and (args.debug is None or len(args.debug) <= 0):
 			args.path.append(".")
-		sim_ok = _cli_actions_sim(proto, args.out, args.path, args.debug if args.debug else [])
+		hooks = tuple() if args.no_hook else (ProtoHook,)
+		sim_ok = _cli_actions_sim(proto, args.out, args.path, args.debug if args.debug else [], hooks=hooks)
 		if sim_ok and args.play:
 			_cli_actions_play(proto, args.out)
 		if not sim_ok:
