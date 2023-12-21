@@ -83,14 +83,14 @@ class Simulation:
 			"-f", *[fleet.path for fleet in self.fleets],
 		], wait=False, stdout=PIPE, stderr=STDOUT)
 		# for loop will end when the sim process exits.
-		sim_exception = False
+		bad_sim = False
 		for line in p.stdout:
 			line = line.decode("utf-8")
 			# Replace '\r\n' line endings with '\n' (because Windows)
 			if line.endswith("\r\n"):
 				line = f"{line[:-2]}\n"
-			if line.startswith("Unhandled exception."):
-				sim_exception = True
+			if line.startswith("Unhandled exception.") or line.startswith("error while executing at wasm backtrace"):
+				bad_sim = True
 			if (match := self.RE_FLEET_DEBUG.fullmatch(line)) is not None and (groups := match.groups())[0] in fleets_by_sim_name:
 				if any(hook.on_stdout(fleets_by_sim_name[groups[0]], groups[1], out) for hook in self.hooks):
 					continue
@@ -101,7 +101,7 @@ class Simulation:
 		for hook in self.hooks:
 			hook.on_finish(out)
 		sim_log_file.close()
-		return not sim_exception
+		return not bad_sim
 
 	def has_hook(self, hook_type: type[SimulationHook]):
 		return any(isinstance(hook, hook_type) for hook in self.hooks)

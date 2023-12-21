@@ -52,7 +52,6 @@ class Executable(abc.ABC):
 			raise FileNotFoundError(f"Tool '{self.tool.name}' is not downloaded.")
 		elif self._exe_path is None or not os.path.isfile(self.exe_path):
 			raise FileNotFoundError(f"Tool '{self.name}' is missing '{self.exe_path}'")
-		print(' '.join([self.exe_path, *args]))
 		p = Popen([self.exe_path, *args], **kwargs)
 		if wait:
 			p.wait()

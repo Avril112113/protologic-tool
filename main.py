@@ -81,6 +81,8 @@ cli_actions_upgrade = cli_action.add_parser("upgrade", help="Update a fleet from
 # ~ build
 cli_actions_build = cli_action.add_parser("build", help="Build the fleet into a wasm binary.")
 cli_actions_build.add_argument("--mode", type=int, default=0, help="Optional mode, functionality depends on template.")
+cli_actions_build.add_argument("--sim", action="store_true", help="Runs a simulation after building.")
+cli_actions_build.add_argument("--play", action="store_true", help="Plays the replay in the player once simulated.")
 
 # ~ sim
 cli_actions_sim = cli_action.add_parser("sim", help="Simulate a battle.")
@@ -185,10 +187,14 @@ def _cli_actions_upgrade(proto: ProtoTool):
 	template.upgrade()
 
 
-def _cli_actions_build(proto: ProtoTool, mode=0):
+def _cli_actions_build(proto: ProtoTool, mode=0, sim=False, play=False):
 	template = _helper_get_template(proto, ".")
 	if template is None: return
-	template.build(mode)
+	if template.build(mode):
+		if sim:
+			print("")
+			if _cli_actions_sim(proto, "./sim", ["."], ["."]) and play:
+				_cli_actions_play(proto, ".")
 
 
 def _cli_actions_sim(proto: ProtoTool, out: str, fleets: list[str], debug: list[str], stdout=True, hooks: Iterable[type[SimulationHook]] = (ProtoHook,)) -> bool:
@@ -303,7 +309,7 @@ def main():
 	elif args.action == "upgrade":
 		_cli_actions_upgrade(proto)
 	elif args.action == "build":
-		_cli_actions_build(proto, args.mode)
+		_cli_actions_build(proto, args.mode, args.sim, args.play)
 	elif args.action == "sim":
 		if len(args.path) <= 0 and (args.debug is None or len(args.debug) <= 0):
 			args.path.append(".")

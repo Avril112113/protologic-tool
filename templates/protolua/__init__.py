@@ -43,3 +43,5 @@ class ProtoLuaTemplate(Template):
 			"--strip-dwarf",
 			f"-O{4-mode}",
 		], exit_for_code=True).wait()
+
+		return True
