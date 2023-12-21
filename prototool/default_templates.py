@@ -7,3 +7,4 @@ def add_default_templates(prototool: "ProtoTool"):
 	import templates
 	prototool.add_template(templates.BlankTemplate)
 	prototool.add_template(templates.ProtoLuaTemplate)
+	prototool.add_template(templates.AssemblyScriptTemplate)

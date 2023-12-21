@@ -1,0 +1,31 @@
+{
+  "name": "code",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "prototool build",
+    "sim": "prototool sim -d . .",
+    "play": "prototool play .",
+    "test": "prototool build --mode 4 --sim --play",
+    "test_release": "prototool build --sim --play"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@assemblyscript/wasi-shim": "^0.1.0",
+    "@types/node": "^20.10.0",
+    "assemblyscript": "^0.27.22"
+  },
+  "dependencies": {
+    "long": "^5.2.3"
+  },
+  "description": "",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./build/release.js",
+      "types": "./build/release.d.ts"
+    }
+  }
+}

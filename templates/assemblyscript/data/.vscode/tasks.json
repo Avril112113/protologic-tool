@@ -1,0 +1,22 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build",
+			"detail": "node tools/scripts/build.js"
+		},
+		{
+			"type": "npm",
+			"script": "sim",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: sim",
+			"detail": "node tools/scripts/sim.js",
+			"dependsOn": ["npm: build"]
+		}
+	]
+}

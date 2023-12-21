@@ -11,7 +11,7 @@ class ProtoLuaTemplate(Template):
 		TemplateFile("tools/protolua/lua_template", "."),
 		TemplateFile("tools/protolua/lua_template/lua/protolua", "./lua/protolua/", override=True),
 	]
-	default_fleets = [["ship.wasm", True]]
+	default_fleets = ["ship.wasm"]
 	hooks = []
 
 	def _build(self, mode: int) -> bool:
@@ -30,18 +30,18 @@ class ProtoLuaTemplate(Template):
 			"--wasm-bulk-memory", "true",
 			"--allow-wasi",
 			"--mapdir", f"/::{os.path.join(self.path, 'lua')}",
-		], exit_for_code=True).wait()
+		], exit_for_code=True)
 
 		print("Running wasm-opt")
 		binaryen = self.proto.get_tool("binaryen", error=True)
 		wasm_opt_exe = binaryen.get_executable("wasm-opt", error=True)
 		wasm_opt_exe.exec([
-			wasm_path,
+			out_wasm,
 			"-o", out_wasm,
 			"--enable-simd",
 			"--enable-bulk-memory",
 			"--strip-dwarf",
 			f"-O{4-mode}",
-		], exit_for_code=True).wait()
+		], exit_for_code=True)
 
 		return True

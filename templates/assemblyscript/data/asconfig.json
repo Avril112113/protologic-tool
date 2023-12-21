@@ -1,0 +1,33 @@
+{
+  "extends": "./node_modules/@assemblyscript/wasi-shim/asconfig.json",
+  "targets": {
+    "debug": {
+      "outFile": "build/debug.wasm",
+      "sourceMap": true,
+      "debug": true
+    },
+    "release": {
+      "outFile": "build/release.wasm",
+      "sourceMap": false,
+      "optimizeLevel": 3,
+      "shrinkLevel": 0,
+      "converge": false,
+      "noAssert": false
+    }
+  },
+  "options": {
+    "lib": ["assembly"],
+    "use": [
+      "ASC_WASI=1",
+      "abort=wasi_abort",
+      "trace=wasi_trace",
+      "seed=wasi_seed",
+      "console=wasi_console",
+      "crypto=wasi_crypto",
+      "performance=wasi_performance",
+      "process=wasi_process",
+      "Date=wasi_Date"
+    ],
+    "exportStart": "_initialize"
+  }
+}
