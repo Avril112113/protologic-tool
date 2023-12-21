@@ -7,10 +7,10 @@ from prototool.simulation import SimulationFleet, SimulationHook
 
 class AssemblyScriptTemplate(Template):
 	name = "assemblyscript"
-	tools = ["protologic", "node"]
+	tools = ["protologic", "binaryen", "node", "protologic-tool-assemblyscript"]
 	files = [
-		TemplateFile("data", "."),
-		TemplateFile("data/src/protologic", "src/protologic", override=True),
+		TemplateFile("tools/protologic-tool-assemblyscript", "."),
+		TemplateFile("tools/protologic-tool-assemblyscript/src/protologic/*", "src/protologic", override=True),
 	]
 	default_fleets = ["build/release.wasm"]
 	hooks = []

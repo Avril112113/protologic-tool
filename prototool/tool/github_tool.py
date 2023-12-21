@@ -16,9 +16,11 @@ class GithubTool(Tool):
 
 	gh_repo: str
 	gh_update_release: Iterable[str]|bool|None
-	gh_update_branch: str|None
+	gh_update_branch: str|bool|None
 	gh_update_paths: str  # Path either within the release, or the branch.
 	gh_allow_pre_release: bool|None
+
+	_update_inplace = None
 
 	def set_repo(self, repo: str):
 		self.gh_repo = repo
@@ -32,7 +34,7 @@ class GithubTool(Tool):
 		self.gh_allow_pre_release = allow_pre_release
 		return self
 
-	def set_update_branch(self, branch="master", paths: Iterable[REDUCE_OS[str]] = (".",)):
+	def set_update_branch(self, branch=True, paths: Iterable[REDUCE_OS[str]] = (".",)):
 		"""Set to update from a branch."""
 		self.gh_update_release = None
 		self.gh_update_branch = branch
@@ -57,7 +59,11 @@ class GithubTool(Tool):
 
 	@property
 	def is_update_inplace(self):
-		return self.gh_update_branch is not None
+		if self._update_inplace is None:
+			self._update_inplace = self.gh_update_branch is not None
+			if self._update_inplace and self.__gh.get_rate_limit().core.remaining < 500:
+				self._update_inplace = False
+		return self._update_inplace
 
 	def _get_release_asset(self) -> GitReleaseAsset:
 		# Cache between multiple calls, since this will be called potentially from _check_update and _update.
@@ -101,25 +107,22 @@ class GithubTool(Tool):
 
 	def _check_update_branch(self, version_dict: dict) -> bool:
 		repo = self.__gh.get_repo(f"{self.gh_repo}")
-		branch = repo.get_branch(self.gh_update_branch)
+		branch = repo.get_branch(repo.default_branch if self.gh_update_branch is True else self.gh_update_branch)
 		return branch.commit.sha != version_dict.get("commit.sha")
 
 	def _update_from_branch(self, version_dict: dict, incremental: bool) -> dict:
-		rate_remaining = self.__gh.get_rate_limit().core.remaining
 		repo = self.__gh.get_repo(f"{self.gh_repo}")
-		branch = repo.get_branch(self.gh_update_branch)
+		branch = repo.get_branch(repo.default_branch if self.gh_update_branch is True else self.gh_update_branch)
 		files_sha = version_dict.get("file.sha", {})
-		if not incremental or rate_remaining < 500 or len(files_sha) == 0:
+		if not incremental or len(files_sha) == 0 or not self.is_update_inplace:
 			# Do a full download to prevent a rate limit.
 			reason = "Initial" if len(files_sha) == 0 else "Avoiding rate limit, set GITHUB_TOKEN env for incremental updates."
 			print(f"Full archive download ({reason})")
 			# Not using repo.get_archive_link(), as it's another api call :/
 			archive_url = repo.archive_url.replace("{archive_format}", "zipball").replace("{/ref}", f"/{branch.name}")
-			self._tutil_download(archive_url, f"{branch.name}.zip")
-			self._tutil_extract(f"{branch.name}.zip", "_tmp")
-			for path in self.gh_update_paths:
-				path = os.path.normpath(path)
-				self._tutil_move(os.path.join("_tmp", path), path)
+			self._tutil_download(archive_url, f"{branch.name}.zip", silent=True)
+			self._tutil_extract(f"{branch.name}.zip", "_tmp", silent=True)
+			self._tutil_move("_tmp/*", ".")
 			self._tutil_delete("_tmp")
 			self._tutil_delete(f"{branch.name}.zip")
 			tree = repo.get_git_tree(branch.name, recursive=True)

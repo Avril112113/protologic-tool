@@ -103,6 +103,11 @@ def add_default_tools(prototool: "ProtoTool"):
 		)
 	)
 
+	prototool.add_tool(GithubTool("protologic-tool-assemblyscript")
+		.set_repo("Avril112113/protologic-tool-assemblyscript")
+		.set_update_branch()
+	)
+
 	prototool.add_tool(GithubTool("protolua")
 		.set_repo("Avril112113/protologic-lua")
 		.set_update_release(allow_pre_release=True, paths=[

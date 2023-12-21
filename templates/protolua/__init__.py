@@ -6,7 +6,7 @@ from prototool.simulation import SimulationFleet, SimulationHook
 
 class ProtoLuaTemplate(Template):
 	name = "protolua"
-	tools = ["protologic", "protolua"]
+	tools = ["protologic", "binaryen", "wizer", "protolua"]
 	files = [
 		TemplateFile("tools/protolua/lua_template", "."),
 		TemplateFile("tools/protolua/lua_template/lua/protolua", "./lua/protolua/", override=True),

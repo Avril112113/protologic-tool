@@ -147,11 +147,11 @@ class Tool(abc.ABC):
 		dir_list = os.listdir(out)
 		if len(dir_list) == 1:
 			dir_path = os.path.join(out, dir_list[0])
-			# TODO: Only use `new_dir_path` actually if needed.
+			# TODO: Only use `new_dir_path` if actually needed.
 			new_dir_path = os.path.join(out, "_tmp")
 			shutil.move(dir_path, new_dir_path)
 			dir_path = new_dir_path
 			for sub in os.listdir(dir_path):
-				print(os.path.join(dir_path, sub), "->", os.path.join(out, sub))
+				# print(os.path.join(dir_path, sub), "->", os.path.join(out, sub))
 				shutil.move(os.path.join(dir_path, sub), os.path.join(out, sub))
 			os.rmdir(dir_path)

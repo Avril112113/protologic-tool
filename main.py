@@ -1,15 +1,8 @@
-import os.path
-import shutil
+import os
 import sys
+import shutil
 import argparse
 from typing import Iterable
-
-import dotenv
-
-from prototool.config import Config
-
-dotenv.load_dotenv(os.path.join(Config.BASE_PATH, ".env"))  # From tool path.
-dotenv.load_dotenv()  # default behaviour
 
 from prototool import ProtoTool, Template
 from prototool.simulation import Simulation, SimulationFleet, SimulationHook

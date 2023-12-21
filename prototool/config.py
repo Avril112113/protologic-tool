@@ -1,5 +1,6 @@
 import os
 import sys
+import dotenv
 
 
 class Config:
@@ -32,3 +33,8 @@ elif len(sys.argv) > 0 and sys.argv[0].endswith(".py") and os.path.isfile(sys.ar
 	Config.update_base_path(os.path.dirname(os.path.abspath(sys.argv[0])))
 else:
 	raise FileNotFoundError(f"Failed to set default's for {Config}")
+
+
+dotenv.load_dotenv(os.path.join(Config.BASE_PATH, ".env"))  # From tool path.
+dotenv.load_dotenv()  # default behaviour
+
