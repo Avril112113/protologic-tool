@@ -69,3 +69,18 @@ The following are available when using the ProtoHook.
 `__protohook__:append:<FILE_NAME>:<DATA>`  
 Where `<FILE_NAME>` is a name of a file and `<DATA>` is a line to write to that file.  
 
+
+## Using or Building from source.
+If you want to simply use this tool, check the [releases](https://github.com/Avril112113/protologic-tool/releases).  
+
+Ensure you have [python](https://www.python.org/) 3.10 or greater available.  
+Ensure you have [poetry](https://python-poetry.org/) available.  
+
+Run `poetry env use 3.10` create/use a python env.  
+Run `poetry install` to install dependencies.  
+Test with `poetry run python main.py`  
+
+To build executables;  
+run `poetry run build` to create a release.  
+If `wsl` is available, a linux build will be created as well.  
+Ensure the same is setup in wsl.  
