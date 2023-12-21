@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "protologic-tool"
+version = "0.1.0"
+description = ""
+authors = ["Avril112113"]
+readme = "README.md"
+packages = [{include = "protologic_tool"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.31.0"
+python-dotenv = "^1.0.0"
+pygithub = "^2.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
