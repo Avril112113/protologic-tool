@@ -38,17 +38,24 @@ def build_copy_release():
 	if not os.path.isfile(os.path.join(dist_dir, "prototool")):
 		print(f"Missing Linux executable!", file=sys.stderr)
 	else:
-		shutil.copy(os.path.join(dist_dir, "prototool"), release_dir)
+		os_release_dir = os.path.join(release_dir, "Linux")
+		os.makedirs(os_release_dir, exist_ok=True)
+		shutil.copy(os.path.join(dist_dir, "prototool"), os_release_dir)
+		# Copy template data
+		for path in iglob(os.path.join(templates_dir, "*", "data")):
+			out = os.path.join(os_release_dir, os.path.relpath(path, base_dir))
+			shutil.copytree(path, out)
 
 	if not os.path.isfile(os.path.join(dist_dir, "prototool.exe")):
 		print(f"Missing Windows executable!", file=sys.stderr)
 	else:
-		shutil.copy(os.path.join(dist_dir, "prototool.exe"), release_dir)
-
-	# Copy template data
-	for path in iglob(os.path.join(templates_dir, "*", "data")):
-		out = os.path.join(release_dir, os.path.relpath(path, base_dir))
-		shutil.copytree(path, out)
+		os_release_dir = os.path.join(release_dir, "Windows")
+		os.makedirs(os_release_dir, exist_ok=True)
+		shutil.copy(os.path.join(dist_dir, "prototool.exe"), os_release_dir)
+		# Copy template data
+		for path in iglob(os.path.join(templates_dir, "*", "data")):
+			out = os.path.join(os_release_dir, os.path.relpath(path, base_dir))
+			shutil.copytree(path, out)
 
 
 def build():
