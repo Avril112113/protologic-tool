@@ -106,11 +106,13 @@ class Template(abc.ABC):
 				print(f"Downloading missing tool '{tool.name}'")
 				tool.update()
 		self._upgrade_pre()
+		updated_files = {}  # Used to prevent same directory from being printed as "Updating" multiple times
 		for tfile in self.files:
 			def _override_handler(s: str, d: str):
 				if tfile.override:
 					if upgrade_msgs:
 						print("Updating", d)
+						updated_files[d] = True
 					return True
 				return False
 
@@ -126,8 +128,9 @@ class Template(abc.ABC):
 				if os.path.isfile(path):
 					if os.path.exists(tfile.dst):
 						if tfile.override:
-							if upgrade_msgs:
+							if upgrade_msgs and dst not in updated_files:
 								print("Updating", dst)
+								updated_files[dst] = True
 						else:
 							continue
 					shutil.copy(path, dst)
@@ -136,7 +139,7 @@ class Template(abc.ABC):
 		self._upgrade_post()
 		self._write_config()
 
-	def build(self, mode: int=0) -> bool:
+	def build(self, mode=0) -> bool:
 		# run pre-build scripts from config
 		pre_builds = self.config.get("pre_build", None)
 		if pre_builds is not None:
