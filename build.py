@@ -45,6 +45,7 @@ def build_copy_release():
 		for path in iglob(os.path.join(templates_dir, "*", "data")):
 			out = os.path.join(os_release_dir, os.path.relpath(path, base_dir))
 			shutil.copytree(path, out)
+		shutil.make_archive(os.path.join(release_dir, "Linux"), "zip", os_release_dir)
 
 	if not os.path.isfile(os.path.join(dist_dir, "prototool.exe")):
 		print(f"Missing Windows executable!", file=sys.stderr)
@@ -56,6 +57,7 @@ def build_copy_release():
 		for path in iglob(os.path.join(templates_dir, "*", "data")):
 			out = os.path.join(os_release_dir, os.path.relpath(path, base_dir))
 			shutil.copytree(path, out)
+		shutil.make_archive(os.path.join(release_dir, "Windows"), "zip", os_release_dir)
 
 
 def build():
