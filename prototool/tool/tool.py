@@ -31,7 +31,9 @@ class Tool(abc.ABC):
 		executable.tool = self
 		return self
 
-	def get_executable(self, name: str):
+	def get_executable(self, name: str, error=False):
+		if error and name not in self.executables:
+			raise ValueError(f"Tool '{self.name}' is missing executable '{name}'")
 		return self.executables.get(name, None)
 
 	def __getitem__(self, item: str):
@@ -67,7 +69,7 @@ class Tool(abc.ABC):
 		if self.is_empemeral:
 			self._update({}, incremental=incremental)
 			return False
-		if self.is_downloaded() and not self.is_update_inplace:
+		if os.path.exists(self.tool_path) and not self.is_update_inplace:
 			shutil.rmtree(self.tool_path)
 		os.makedirs(self.tool_path, exist_ok=True)
 		version_dict = self._read_version_dict(default={})
@@ -88,7 +90,7 @@ class Tool(abc.ABC):
 	def is_downloaded(self):
 		if self.is_empemeral:
 			return not self._check_update({})
-		return os.path.exists(self.tool_path)
+		return os.path.exists(self._version_dict_path)
 
 	def ensure_available(self):
 		"""Will ensure the tool is available and download if not, but will not check for updates."""
@@ -96,7 +98,7 @@ class Tool(abc.ABC):
 			self.update()
 
 	def _read_version_dict(self, default=None) -> dict | None:
-		if os.path.isfile(os.path.join(self.tool_path, ".version_dict.json")):
+		if os.path.isfile(self._version_dict_path):
 			with open(self._version_dict_path, "r") as f:
 				return json.load(f)
 		return default
@@ -145,6 +147,11 @@ class Tool(abc.ABC):
 		dir_list = os.listdir(out)
 		if len(dir_list) == 1:
 			dir_path = os.path.join(out, dir_list[0])
+			# TODO: Only use `new_dir_path` actually if needed.
+			new_dir_path = os.path.join(out, "_tmp")
+			shutil.move(dir_path, new_dir_path)
+			dir_path = new_dir_path
 			for sub in os.listdir(dir_path):
+				print(os.path.join(dir_path, sub), "->", os.path.join(out, sub))
 				shutil.move(os.path.join(dir_path, sub), os.path.join(out, sub))
 			os.rmdir(dir_path)

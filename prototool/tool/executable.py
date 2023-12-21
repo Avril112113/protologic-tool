@@ -46,10 +46,18 @@ class Executable(abc.ABC):
 	def exists(self):
 		return self._exe_path is not None and os.path.isfile(self.exe_path)
 
-	def exec(self, args: list[str], **kwargs):
+	def exec(self, args: list[str], wait=True, raise_for_code=True, exit_for_code=False, **kwargs):
 		assert self.tool is not None, f"Executable '{self.name}' is not associated with a tool."
 		if not self.tool.is_downloaded():
 			raise FileNotFoundError(f"Tool '{self.tool.name}' is not downloaded.")
 		elif self._exe_path is None or not os.path.isfile(self.exe_path):
 			raise FileNotFoundError(f"Tool '{self.name}' is missing '{self.exe_path}'")
-		return Popen([self.exe_path, *args], **kwargs)
+		print(' '.join([self.exe_path, *args]))
+		p = Popen([self.exe_path, *args], **kwargs)
+		if wait:
+			p.wait()
+			if exit_for_code and p.returncode != 0:
+				exit(p.returncode)
+			elif raise_for_code and p.returncode != 0:
+				raise ValueError(f"Return code: {p.returncode}")
+		return p

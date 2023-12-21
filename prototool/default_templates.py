@@ -6,3 +6,4 @@ if TYPE_CHECKING:
 def add_default_templates(prototool: "ProtoTool"):
 	import templates
 	prototool.add_template(templates.BlankTemplate)
+	prototool.add_template(templates.ProtoLuaTemplate)

@@ -78,6 +78,10 @@ cli_actions_new.add_argument("--delete", action="store_true", help=argparse.SUPP
 # ~ upgrade
 cli_actions_upgrade = cli_action.add_parser("upgrade", help="Update a fleet from it's template.")
 
+# ~ build
+cli_actions_build = cli_action.add_parser("build", help="Build the fleet into a wasm binary.")
+cli_actions_build.add_argument("--mode", type=int, default=0, help="Optional mode, functionality depends on template.")
+
 # ~ sim
 cli_actions_sim = cli_action.add_parser("sim", help="Simulate a battle.")
 cli_actions_sim.add_argument("--out", default="./sim", help="Directory to save simulation log and replay.")
@@ -93,6 +97,9 @@ cli_actions_sim.add_argument("path", nargs="?", default=".", help="Path to repla
 
 def _helper_get_template(proto: ProtoTool, path: str) -> Template|None:
 	template_name = Template.get_template_name_from_config(path)
+	if template_name is None:
+		print(f"Missing 'prototool.json' in '{os.path.abspath(path)}'.", file=sys.stderr)
+		return None
 	template_type = proto.get_template(template_name)
 	if template_type is None:
 		print(f"Unknown template '{template_name}'.", file=sys.stderr)
@@ -169,13 +176,19 @@ def _cli_actions_new(proto: ProtoTool, template_name: str, path: str):
 		exit(-1)
 	os.makedirs(path)
 	template: Template = template_type(proto, path)
-	template.upgrade()
+	template.upgrade(upgrade_msgs=False)
 
 
 def _cli_actions_upgrade(proto: ProtoTool):
 	template = _helper_get_template(proto, ".")
 	if template is None: return
 	template.upgrade()
+
+
+def _cli_actions_build(proto: ProtoTool, mode=0):
+	template = _helper_get_template(proto, ".")
+	if template is None: return
+	template.build(mode)
 
 
 def _cli_actions_sim(proto: ProtoTool, out: str, fleets: list[str], debug: list[str], stdout=True, hooks: Iterable[type[SimulationHook]] = (ProtoHook,)) -> bool:
@@ -203,16 +216,17 @@ def _cli_actions_sim(proto: ProtoTool, out: str, fleets: list[str], debug: list[
 					sub_fleet_path, sub_fleet_debug = sub_fleet
 				else:
 					sub_fleet_path, sub_fleet_debug = sub_fleet, False
-				if sub_fleet_debug is None:
-					sub_fleet_debug = fleet_debug
-				add_path(sub_fleet_path, sub_fleet_debug)
+				add_path(sub_fleet_path, sub_fleet_debug or fleet_debug)
 		else:
 			print(f"Fleet '{fleet_path}' not found.", file=sys.stderr)
 			return False
 		return False
 
-	for path in fleets + debug:
-		add_path(path, path in debug)
+	for path in debug:
+		add_path(path, True)
+
+	for path in fleets:
+		add_path(path, False)
 
 	if len(sim.fleets) <= 0:
 		print(f"Simulation not run, missing fleets to simulate.", file=sys.stderr)
@@ -257,7 +271,7 @@ def _cli_actions_play(proto: ProtoTool, path: str):
 		return
 
 	print(f"Starting player '{path}'")
-	player_exe.exec([os.path.abspath(path)])
+	player_exe.exec([os.path.abspath(path)], wait=False, raise_for_code=False)
 
 
 def main():
@@ -288,6 +302,8 @@ def main():
 		_cli_actions_new(proto, args.template, args.path)
 	elif args.action == "upgrade":
 		_cli_actions_upgrade(proto)
+	elif args.action == "build":
+		_cli_actions_build(proto, args.mode)
 	elif args.action == "sim":
 		if len(args.path) <= 0 and (args.debug is None or len(args.debug) <= 0):
 			args.path.append(".")

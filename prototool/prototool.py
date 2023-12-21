@@ -27,7 +27,9 @@ class ProtoTool:
 		self.tools[tool.name] = tool
 		return tool
 
-	def get_tool(self, name: str):
+	def get_tool(self, name: str, error=False):
+		if error and name not in self.tools:
+			raise ValueError(f"Missing tool '{name}'")
 		return self.tools.get(name, None)
 
 	def add_template(self, template: TTemplate) -> TTemplate:
@@ -35,5 +37,7 @@ class ProtoTool:
 		self.templates[template.name] = template
 		return template
 
-	def get_template(self, name: str):
+	def get_template(self, name: str, error=False):
+		if error and name not in self.templates:
+			raise ValueError(f"Missing template '{name}'")
 		return self.templates.get(name, None)

@@ -81,7 +81,7 @@ class Simulation:
 			"--output", sim_replay_path.replace(".json.deflate", "", 1),
 			"--debug", *["true" if fleet.debug else "false" for fleet in self.fleets],
 			"-f", *[fleet.path for fleet in self.fleets],
-		], stdout=PIPE, stderr=STDOUT)
+		], wait=False, stdout=PIPE, stderr=STDOUT)
 		# for loop will end when the sim process exits.
 		sim_exception = False
 		for line in p.stdout:

@@ -15,7 +15,7 @@ class GithubTool(Tool):
 	__gh = Github(auth=Auth.Token(os.getenv("GITHUB_TOKEN")) if os.getenv("GITHUB_TOKEN") else None)  # Global public GitHub instance.
 
 	gh_repo: str
-	gh_update_release: Iterable[str]|None
+	gh_update_release: Iterable[str]|bool|None
 	gh_update_branch: str|None
 	gh_update_paths: str  # Path either within the release, or the branch.
 	gh_allow_pre_release: bool|None
@@ -24,7 +24,7 @@ class GithubTool(Tool):
 		self.gh_repo = repo
 		return self
 
-	def set_update_release(self, name_contains: Iterable[REDUCE_OS[str]], paths: Iterable[REDUCE_OS[str]] = ("*",), allow_pre_release=False):
+	def set_update_release(self, name_contains: Iterable[REDUCE_OS[str]] = True, paths: Iterable[REDUCE_OS[str]] = ("*",), allow_pre_release=False):
 		"""Set to update from releases."""
 		self.gh_update_branch = None
 		self.gh_update_release = reduce_os_dict(name_contains)
@@ -72,7 +72,7 @@ class GithubTool(Tool):
 			raise FileNotFoundError(f"Failed to find applicable release.\nAllowPreRelease={self.gh_allow_pre_release}")
 		assets = list(
 			asset for asset in release.assets
-			if all(part in asset.name for part in self.gh_update_release)
+			if self.gh_update_release is True or all(part in asset.name for part in self.gh_update_release)
 			if not asset.name.endswith("sha256")
 		)
 		if len(assets) <= 0:

@@ -76,13 +76,22 @@ def add_default_tools(prototool: "ProtoTool"):
 		.add_executable(Executable("node")
 			.find_exe("node")
 			.set_url("https://nodejs.org/")
-			)
-			.add_executable(Executable("npm")
-				.find_exe("npm")
-				.set_url("https://nodejs.org/")
-			)
-			.add_executable(Executable("npx")
-				.find_exe("npx")
-				.set_url("https://nodejs.org/")
-			)
 		)
+		.add_executable(Executable("npm")
+			.find_exe("npm")
+			.set_url("https://nodejs.org/")
+		)
+		.add_executable(Executable("npx")
+			.find_exe("npx")
+			.set_url("https://nodejs.org/")
+		)
+	)
+
+	prototool.add_tool(GithubTool("protolua")
+		.set_repo("Avril112113/protologic-lua")
+		.set_update_release(allow_pre_release=True, paths=[
+			"build",
+			"lua_template",
+			"lua_typing",
+		])
+	)

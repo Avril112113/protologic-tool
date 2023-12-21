@@ -1,9 +1,13 @@
 import abc
+import filecmp
 import json
 import os.path
+import re
 import shutil
+import sys
 from dataclasses import dataclass
 from glob import iglob
+from subprocess import Popen
 from typing import TYPE_CHECKING, TypedDict, Callable
 
 from .config import Config
@@ -12,16 +16,21 @@ if TYPE_CHECKING:
 	from .simulation import SimulationHook
 
 
-def _copytree(src: str, dst: str, override: Callable[[str,str], bool]|None):
+def _copytree(src: str, dst: str, override: Callable[[str,str], bool]|None = None, _filter: Callable[[str,str], bool]|None = None, mark: Callable[[str,str], None]|None=None):
 	for name in os.listdir(src):
 		path = os.path.join(src, name)
 		out = os.path.join(dst, name)
-		if os.path.isfile(path):
-			if override is None or not os.path.exists(out) or override(path, out):
-				shutil.copy(path, out)
-		elif os.path.isdir(path):
-			os.makedirs(out, exist_ok=True)
-			_copytree(path, out, override)
+		if _filter is None or not _filter(path, out):
+			if os.path.isfile(path):
+				if not os.path.exists(out) or override is None or override(path, out):
+					shutil.copy(path, out)
+					if mark is not None:
+						mark(path, out)
+			elif os.path.isdir(path):
+				os.makedirs(out, exist_ok=True)
+				_copytree(path, out, override, _filter)
+				if mark is not None:
+					mark(path, out)
 
 
 @dataclass(init=True)
@@ -36,6 +45,8 @@ class TemplateConfig(TypedDict):
 	template: str
 	tools: list[str]
 	fleets: list[str | list[str, bool]]
+	pre_build: list[list[str]]|None
+	post_build: list[list[str]]|None
 
 
 class Template(abc.ABC):
@@ -64,8 +75,11 @@ class Template(abc.ABC):
 	def get_template_name_from_config(path: str) -> str|None:
 		if not path.endswith("prototool.json"):
 			path = os.path.join(path, "prototool.json")
-		with open(path, "r") as f:
-			return json.load(f).get("template", None)
+		if os.path.isfile(path):
+			with open(path, "r") as f:
+				return json.load(f).get("template", None)
+		else:
+			return None
 
 	path: str
 	config: TemplateConfig
@@ -82,7 +96,7 @@ class Template(abc.ABC):
 		self.template_path = os.path.join(Config.TEMPLATES_PATH, self.name)
 		self.data_path = os.path.join(self.template_path, "data")
 
-	def upgrade(self):
+	def upgrade(self, upgrade_msgs=True):
 		# Ensure all required tools are in the config
 		for tool_name in self.tools:
 			if tool_name not in self.config["tools"]:
@@ -97,7 +111,8 @@ class Template(abc.ABC):
 		for tfile in self.files:
 			def _override_handler(s: str, d: str):
 				if tfile.override:
-					print("Updating", d)
+					if upgrade_msgs:
+						print("Updating", d)
 					return True
 				return False
 
@@ -113,14 +128,48 @@ class Template(abc.ABC):
 				if os.path.isfile(path):
 					if os.path.exists(tfile.dst):
 						if tfile.override:
-							print("Updating", dst)
+							if upgrade_msgs:
+								print("Updating", dst)
 						else:
 							continue
 					shutil.copy(path, dst)
 				elif os.path.isdir(path):
-					_copytree(src, dst, override=_override_handler)
+					_copytree(path, dst, override=_override_handler)
 		self._upgrade_post()
 		self._write_config()
+
+	def build(self, mode: int=0) -> bool:
+		# run pre-build scripts from config
+		pre_builds = self.config.get("pre_build", None)
+		if pre_builds is not None:
+			print("Running pre-build actions...")
+			for pre_build in pre_builds:
+				print(f"~ {' '.join(pre_build)}")
+				args = list(pre_build)
+				if re.match(r"^tools[\\/]", args[0]):
+					args[0] = re.sub(r"^tools[\\/]", re.escape(Config.TOOLS_PATH + os.path.sep), args[0])
+				p = Popen(args, shell=True, cwd=self.path)
+				p.wait()
+				if p.returncode != 0:
+					print(f"Returned code: {p.returncode}")
+					return False
+		# run template build
+		ok = self._build(mode)
+		# run post-build scripts from config
+		post_builds = self.config.get("post_build", None)
+		if post_builds is not None:
+			print("Running post-build actions...")
+			for post_build in post_builds:
+				print(f"~ {' '.join(post_build)}")
+				args = list(post_build)
+				if re.match(r"^tools[/\\]", args[0]):
+					args[0] = re.sub(r"^tools[\\/]", re.escape(Config.TOOLS_PATH + os.path.sep), args[0])
+				p = Popen(args, shell=True, cwd=self.path)
+				p.wait()
+				if p.returncode != 0:
+					print(f"Returned code: {p.returncode}")
+					return False
+		return ok
 
 	def _read_config(self):
 		if not os.path.isfile(self._config_path):
@@ -147,3 +196,6 @@ class Template(abc.ABC):
 
 	# Overrideable method for template upgrade
 	def _upgrade_post(self): pass
+
+	# Overrideable method for build action
+	def _build(self, mode: int) -> bool: return True
