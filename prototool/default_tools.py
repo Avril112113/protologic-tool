@@ -1,11 +1,27 @@
+import os
 from typing import TYPE_CHECKING
+
+from .config import Config
+from .tool import Executable, GithubTool, SystemTool
 if TYPE_CHECKING:
 	from .prototool import ProtoTool
 
-from .tool import Executable, GithubTool, SystemTool
-
 
 def add_default_tools(prototool: "ProtoTool"):
+	prototool_exe_base_path = os.path.join(Config.BASE_PATH, "prototool")
+	if Config.FROZEN:
+		prototool.add_tool(SystemTool("prototool")
+			.add_executable(Executable("prototool")
+				.set_exe({"Windows": f"{prototool_exe_base_path}.exe", "Linux": prototool_exe_base_path, "Darwin": prototool_exe_base_path})
+			)
+		)
+	else:
+		prototool.add_tool(SystemTool("prototool")
+			.add_executable(Executable("prototool")
+				.set_exe({"Windows": f"{prototool_exe_base_path}.bat", "Linux": f"{prototool_exe_base_path}.sh", "Darwin": f"{prototool_exe_base_path}.sh"})
+			)
+		)
+
 	prototool.add_tool(GithubTool("protologic")
 		.set_repo("Protologic/Release")
 		.set_update_branch(paths=[

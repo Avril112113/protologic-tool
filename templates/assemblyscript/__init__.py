@@ -1,5 +1,6 @@
 import os.path
 
+from prototool.utils import file_replace
 from prototool.template import Template, TemplateFile
 from prototool.simulation import SimulationFleet, SimulationHook
 
@@ -15,8 +16,15 @@ class AssemblyScriptTemplate(Template):
 	hooks = []
 
 	def _upgrade_post(self):
+		prototool_tool = self.proto.get_tool("prototool", error=True)
+		prototool_exe = prototool_tool.get_executable("prototool")
+
 		node_tool = self.proto.get_tool("node", error=True)
 		npm_exe = node_tool.get_executable("npm", error=True)
+
+		file_replace(os.path.join(self.path, "package.json"), {
+			"${prototool}": " ".join(prototool_exe.get_shell_args()),
+		})
 
 		# Install/update all dependencies
 		npm_exe.exec(["install"], cwd=os.path.abspath(self.path), exit_for_code=True)

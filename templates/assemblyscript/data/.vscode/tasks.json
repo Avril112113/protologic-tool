@@ -2,21 +2,28 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "npm: test",
 			"type": "npm",
-			"script": "build",
-			"group": "build",
-			"problemMatcher": [],
-			"label": "npm: build",
-			"detail": "node tools/scripts/build.js"
+			"script": "test",
+			"group": "build"
 		},
 		{
+			"label": "npm: build",
+			"type": "npm",
+			"script": "build",
+			"group": "build"
+		},
+		{
+			"label": "npm: sim",
 			"type": "npm",
 			"script": "sim",
-			"group": "build",
-			"problemMatcher": [],
-			"label": "npm: sim",
-			"detail": "node tools/scripts/sim.js",
-			"dependsOn": ["npm: build"]
+			"group": "build"
+		},
+		{
+			"label": "npm: play",
+			"type": "npm",
+			"script": "play",
+			"group": "build"
 		}
 	]
 }

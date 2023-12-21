@@ -16,6 +16,8 @@ class Config:
 	# Path to the 'templates' folder.
 	TEMPLATES_PATH: str
 
+	FROZEN = False
+
 	@classmethod
 	def update_base_path(cls, path: str):
 		cls.BASE_PATH = os.path.abspath(path)
@@ -25,6 +27,7 @@ class Config:
 
 if getattr(sys, "frozen", False):
 	Config.update_base_path(os.path.dirname(os.path.abspath(sys.executable)))
+	Config.FROZEN = True
 elif len(sys.argv) > 0 and sys.argv[0].endswith(".py") and os.path.isfile(sys.argv[0]):
 	Config.update_base_path(os.path.dirname(os.path.abspath(sys.argv[0])))
 else:
