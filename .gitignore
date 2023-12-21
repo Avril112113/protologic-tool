@@ -3,5 +3,9 @@
 
 .env
 
+/build/
+/dist/
+/release/
+
 /tools/
 /test/

@@ -1,6 +1,7 @@
 import os
 import abc
 import shutil
+import sys
 from subprocess import Popen
 
 from ..utils import reduce_os_dict, REDUCE_OS
@@ -72,7 +73,7 @@ class Executable(abc.ABC):
 		if wait:
 			p.wait()
 			if exit_for_code and p.returncode != 0:
-				exit(p.returncode)
+				sys.exit(p.returncode)
 			elif raise_for_code and p.returncode != 0:
 				raise ValueError(f"Return code: {p.returncode}")
 		return p

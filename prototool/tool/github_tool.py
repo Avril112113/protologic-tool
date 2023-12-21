@@ -95,8 +95,10 @@ class GithubTool(Tool):
 
 	def _update_from_release(self, version_dict: dict) -> dict:
 		asset = self._get_release_asset()
-		self._tutil_download(asset.browser_download_url, asset.name)
-		self._tutil_extract(asset.name, "_tmp")
+		print("Downloading...")
+		self._tutil_download(asset.browser_download_url, asset.name, silent=True)
+		print("Extracting...")
+		self._tutil_extract(asset.name, "_tmp", silent=True)
 		self._tutil_delete(asset.name)
 		for path in self.gh_update_paths:
 			self._tutil_move(os.path.join("_tmp", path), ".")
@@ -116,11 +118,13 @@ class GithubTool(Tool):
 		files_sha = version_dict.get("file.sha", {})
 		if not incremental or len(files_sha) == 0 or not self.is_update_inplace:
 			# Do a full download to prevent a rate limit.
-			reason = "Initial" if len(files_sha) == 0 else "Avoiding rate limit, set GITHUB_TOKEN env for incremental updates."
+			reason = "Initial" if len(files_sha) == 0 else "Set GITHUB_TOKEN env for incremental updates."
 			print(f"Full archive download ({reason})")
 			# Not using repo.get_archive_link(), as it's another api call :/
 			archive_url = repo.archive_url.replace("{archive_format}", "zipball").replace("{/ref}", f"/{branch.name}")
+			print("Downloading...")
 			self._tutil_download(archive_url, f"{branch.name}.zip", silent=True)
+			print("Extracting...")
 			self._tutil_extract(f"{branch.name}.zip", "_tmp", silent=True)
 			self._tutil_move("_tmp/*", ".")
 			self._tutil_delete("_tmp")

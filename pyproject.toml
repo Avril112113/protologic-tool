@@ -3,14 +3,22 @@ name = "protologic-tool"
 version = "0.1.0"
 description = ""
 authors = ["Avril112113"]
-readme = "README.md"
-packages = [{include = "protologic_tool"}]
+readme = "readme.md"
+packages = [{include="build.py"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.13"
 requests = "^2.31.0"
 python-dotenv = "^1.0.0"
 pygithub = "^2.1.1"
+
+[tool.poetry.dev-dependencies]
+pyinstaller = "^6.3.0"
+
+[tool.poetry.scripts]
+build_executable = "build:build_executable"
+build_copy = "build:build_copy_release"
+build = "build:build"
 
 
 [build-system]

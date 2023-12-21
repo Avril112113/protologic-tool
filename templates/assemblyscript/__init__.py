@@ -23,7 +23,7 @@ class AssemblyScriptTemplate(Template):
 		npm_exe = node_tool.get_executable("npm", error=True)
 
 		file_replace(os.path.join(self.path, "package.json"), {
-			"${prototool}": " ".join(prototool_exe.get_shell_args()),
+			"${prototool}": " ".join(prototool_exe.get_shell_args()).replace("\\", "\\\\"),
 		})
 
 		# Install/update all dependencies

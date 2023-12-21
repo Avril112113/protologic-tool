@@ -120,7 +120,7 @@ def _cli_actions_tool_update(proto: ProtoTool, name: str, incremental=True):
 	tool = proto.get_tool(name)
 	if tool is None:
 		print(f"Unknown tool '{name}'.", file=sys.stderr)
-		exit(-1)
+		sys.exit(-1)
 	elif tool.is_downloaded() and not tool.check_update():
 		print(f"No update found for '{name}'.")
 		return
@@ -136,10 +136,10 @@ def _cli_actions_tool_delete(proto: ProtoTool, name: str):
 	tool = proto.get_tool(name)
 	if tool is None:
 		print(f"Unknown tool '{name}'.", file=sys.stderr)
-		exit(-1)
+		sys.exit(-1)
 	elif not tool.is_downloaded():
 		print(f"Tool '{name}' not downloaded.", file=sys.stderr)
-		exit(-1)
+		sys.exit(-1)
 	shutil.rmtree(tool.tool_path)
 	print(f"Tool '{name}' deleted.")
 
@@ -165,10 +165,10 @@ def _cli_actions_new(proto: ProtoTool, template_name: str, path: str):
 	template_type = proto.get_template(template_name)
 	if template_type is None:
 		print(f"Unknown template '{template_name}'.", file=sys.stderr)
-		exit(-1)
+		sys.exit(-1)
 	elif os.path.exists(path):
 		print(f"Path exists '{path}', ensure a non-existent path.", file=sys.stderr)
-		exit(-1)
+		sys.exit(-1)
 	os.makedirs(path)
 	template: Template = template_type(proto, path)
 	template.upgrade(upgrade_msgs=False)
@@ -311,7 +311,7 @@ def main():
 		if sim_ok and args.play:
 			_cli_actions_play(proto, args.out)
 		if not sim_ok:
-			exit(-1)
+			sys.exit(-1)
 	elif args.action == "play":
 		_cli_actions_play(proto, args.path)
 	else:
