@@ -13,7 +13,7 @@ What this tool does:
 A directory containing `prototool.json` is a valid fleet.  
 The format of this file is described below.  
 Comments are not valid, but are used here to explain things.  
-```json
+```jsonc
 {
 	// Name of the template.
 	"template": "blank",
@@ -47,7 +47,7 @@ Comments are not valid, but are used here to explain things.
 ## Templates
 Currently, there is only 3 templates (`prototool template list`).  
 - `blank` - Simple blank template.  
-- `assemblyscript` - [AssemblyScript](https://www.assemblyscript.org/), very similar to TypeScript.  [Avril112113/protologic-tool-assemblyscript](https://github.com/Avril112113/protologic-tool-assemblyscript)    
+- `assemblyscript` - [AssemblyScript](https://www.assemblyscript.org/), very similar to TypeScript.  [Avril112113/protologic-tool-assemblyscript](https://github.com/Avril112113/protologic-tool-assemblyscript)  
 - `protolua` - Lua. [Avril112113/protologic-lua](https://github.com/Avril112113/protologic-lua)  
 
 If you use a different language or setup, use the blank template and setup `"pre_build"` actions.  
@@ -84,3 +84,11 @@ To build executables;
 run `poetry run build` to create a release.  
 If `wsl` is available, a linux build will be created as well.  
 Ensure the same is setup in wsl.  
+
+
+# Credits
+[Avril112113](https://github.com/Avril112113) - Creator of this tool.  
+[martindevans](https://github.com/martindevans) -  Creator of [ProtoLogic](https://github.com/Protologic/Release).  
+[1Solon](https://github.com/1Solon) - Got AssemblyScript working in ProtoLogic.  
+
+And anyone who uses this tool, thank you!  
