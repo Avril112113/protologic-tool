@@ -55,17 +55,23 @@ If you use a different language or setup, use the blank template and setup `"pre
 
 
 ## Sim Hooks
-When a sim is run through ProtoTool, templates can add hooks to the log output.  
-These allow for additional debugging features.  
-There is also ProtoHook which is active by default, unless `--no-hook` is specified.  
-See [ProtoHook usage](#protohook-usage) for what it can provide.  
+Sim hooks capture and process output from the sim.  
+A hook expects a line with a specific format, as described below, [Default hook usage](#available-hook-features).  
+These only work when the sim is being run through ProtoTool.  
+The default hook can be disabled by providing `--no-hook` when running the sim.  
 
-Using hooks is as simple as printing to the sim output when the fleet is in debug mode.  
+Example of using the file append hook from JS.  
+```ts
+console.log("__protohook__:append:foo.txt:Hello world!");
+console.log("__protohook__:append:foo.txt:I am located at ./sim/foo.txt...");
+console.log("__protohook__:append:foo.txt:This is the third line.");
+```
 
 
-### ProtoHook usage
-The following are available when using the ProtoHook.  
+### Available hook features
+Printing a line with any of the following formats will utilise that hook feature.  
 
+To append data to a file, which is outputted to the sim log directory.  
 `__protohook__:append:<FILE_NAME>:<DATA>`  
 Where `<FILE_NAME>` is a name of a file and `<DATA>` is a line to write to that file.  
 
